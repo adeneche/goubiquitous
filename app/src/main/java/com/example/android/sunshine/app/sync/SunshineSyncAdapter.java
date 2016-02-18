@@ -83,7 +83,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements
     private static final String WEATHER_ID_KEY = "com.example.android.sunshine.data.weather_id";
 
     private GoogleApiClient mGoogleApiClient;
-//    private boolean mResolvingError = false;
 
     private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
             WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
@@ -123,9 +122,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements
     @Override
     public void onConnected(Bundle bundle) {
         Log.d(LOG_TAG, "Google API Client was connected");
-//        mResolvingError = false;
-        //TODO move this to SunshineSyncAdapter
-        sendWeatherToWear();
     }
 
     @Override
@@ -135,21 +131,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
-//        if (mResolvingError) {
-//            // Already attempting to resolve an error.
-//            return;
-//        } else if (result.hasResolution()) {
-//            try {
-//                mResolvingError = true;
-//                result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
-//            } catch (IntentSender.SendIntentException e) {
-//                // There was an error with the resolution intent. Try again.
-//                mGoogleApiClient.connect();
-//            }
-//        } else {
-            Log.e(LOG_TAG, "Connection to Google API client has failed");
-//            mResolvingError = false;
-//        }
+        Log.e(LOG_TAG, "Connection to Google API client has failed");
     }
 
     @Override
@@ -245,16 +227,13 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements
     }
 
     // Create a data map and put data in it
-    private void sendWeatherToWear() {
+    private void sendWeatherToWear(double low, double high, int weatherId) {
         PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/weather");
         Random rnd = new Random();
-        int minTemp = rnd.nextInt(100);
-        int maxTemp = rnd.nextInt(100);
-        int weatherId = rnd.nextInt(10);
-        Log.d(LOG_TAG, "sending ("+minTemp+", "+maxTemp+"), "+weatherId);
+        Log.d(LOG_TAG, "sending ("+low+", "+high+"), "+weatherId);
 
-        putDataMapReq.getDataMap().putInt(MIN_TEMP_KEY, minTemp);
-        putDataMapReq.getDataMap().putInt(MAX_TEMP_KEY, maxTemp);
+        putDataMapReq.getDataMap().putInt(MIN_TEMP_KEY, (int) low);
+        putDataMapReq.getDataMap().putInt(MAX_TEMP_KEY, (int) high);
         putDataMapReq.getDataMap().putInt(WEATHER_ID_KEY, weatherId);
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
         PendingResult<DataApi.DataItemResult> pendingResult =
@@ -415,9 +394,12 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements
                 weatherValues.put(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID, weatherId);
 
                 cVVector.add(weatherValues);
+
+                if (i == 0) {
+                    sendWeatherToWear(low, high, weatherId);
+                }
             }
 
-            int inserted = 0;
             // add to database
             if ( cVVector.size() > 0 ) {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];

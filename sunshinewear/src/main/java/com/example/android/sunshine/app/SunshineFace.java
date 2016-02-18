@@ -24,7 +24,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -84,6 +83,8 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
 
     int lowTemp = -1;
     int highTemp = -1;
+    int weatherId = -1;
+    boolean receivedData = false;
 
     @Override
     public Engine onCreateEngine() {
@@ -123,6 +124,8 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
         Log.i(LOG_TAG, " received data : (" + low + ", " + high + "), " + weatherId);
         lowTemp = low;
         highTemp = high;
+        this.weatherId = weatherId;
+        receivedData = true;
     }
 
     @Override
@@ -180,6 +183,8 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
          */
         boolean mLowBitAmbient;
 
+        int weatherId = -1;
+
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
@@ -205,8 +210,7 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
 
             mTime = new Time();
 
-            Drawable weatherDrawable = resources.getDrawable(R.drawable.art_clear);
-            mWeatherBitmap = ((BitmapDrawable) weatherDrawable).getBitmap();
+            loadIconResourceForWeatherCondition(weatherId);
 
             mWeatherPaint = new Paint();
 
@@ -215,6 +219,42 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
                     .addOnConnectionFailedListener(SunshineFace.this)
                     .addApi(Wearable.API) // tell Google API that we want to use Warable API
                     .build();
+        }
+
+        private void loadIconResourceForWeatherCondition(int weatherId) {
+            // Based on weather code data found at:
+            // http://bugs.openweathermap.org/projects/api/wiki/Weather_Condition_Codes
+            int icon = -1;
+
+            if (weatherId >= 200 && weatherId <= 232) {
+                icon = R.drawable.ic_storm;
+            } else if (weatherId >= 300 && weatherId <= 321) {
+                icon = R.drawable.ic_light_rain;
+            } else if (weatherId >= 500 && weatherId <= 504) {
+                icon = R.drawable.ic_rain;
+            } else if (weatherId == 511) {
+                icon = R.drawable.ic_snow;
+            } else if (weatherId >= 520 && weatherId <= 531) {
+                icon = R.drawable.ic_rain;
+            } else if (weatherId >= 600 && weatherId <= 622) {
+                icon = R.drawable.ic_snow;
+            } else if (weatherId >= 701 && weatherId <= 761) {
+                icon = R.drawable.ic_fog;
+            } else if (weatherId == 761 || weatherId == 781) {
+                icon = R.drawable.ic_storm;
+            } else if (weatherId == 800) {
+                icon = R.drawable.ic_clear;
+            } else if (weatherId == 801) {
+                icon = R.drawable.ic_light_clouds;
+            } else if (weatherId >= 802 && weatherId <= 804) {
+                icon = R.drawable.ic_cloudy;
+            }
+
+            mWeatherBitmap = null;
+            if (icon != -1) {
+                Drawable weatherDrawable = getResources().getDrawable(icon);
+                mWeatherBitmap = ((BitmapDrawable) weatherDrawable).getBitmap();
+            }
         }
 
         @Override
@@ -368,16 +408,21 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
                 canvas.drawText(mTime.format("%a, %b %d %Y"), bounds.centerX(), mDateYOffset, mDatePaint);
                 canvas.drawLine(bounds.centerX() - 25, mDateYOffset + 20, bounds.centerX() + 25, mDateYOffset + 20, mDatePaint);
 
-                //TODO the following should only be visible after we receive weather msg
-                // low/high temperatures
-                canvas.drawText(lowTemp+"˚", bounds.centerX(), mTempOffset, mHTPaint);
-                canvas.drawText(highTemp+"˚", (int)(bounds.width() * .7), mTempOffset, mLTPaint);
+                if (receivedData) {
+                    // low/high temperatures
+                    canvas.drawText(lowTemp + "˚", bounds.centerX(), mTempOffset, mHTPaint);
+                    canvas.drawText(highTemp + "˚", (int) (bounds.width() * .7), mTempOffset, mLTPaint);
 
-                // draw weather graphic
-                Matrix mtx = new Matrix();
-                mtx.setScale(.4f, .4f);
-                mtx.postTranslate(bounds.width()*.2f, mTempOffset-40);
-                canvas.drawBitmap(mWeatherBitmap, mtx, mWeatherPaint);
+                    if (weatherId != SunshineFace.this.weatherId) {
+                        weatherId = SunshineFace.this.weatherId;
+                        loadIconResourceForWeatherCondition(weatherId);
+                    }
+
+                    if (mWeatherBitmap != null) {
+                        // draw weather graphic
+                        canvas.drawBitmap(mWeatherBitmap, bounds.width() * .2f, mTempOffset - 60, mWeatherPaint);
+                    }
+                }
             }
         }
 
