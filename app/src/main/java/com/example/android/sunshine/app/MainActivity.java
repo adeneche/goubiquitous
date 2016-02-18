@@ -16,7 +16,6 @@
 package com.example.android.sunshine.app;
 
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -36,28 +35,8 @@ import com.example.android.sunshine.app.gcm.RegistrationIntentService;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
-import com.google.android.gms.wearable.Wearable;
 
-import java.util.Random;
-
-public class MainActivity extends AppCompatActivity implements ForecastFragment.Callback,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
-
-    /**
-     * Request code for launching the Intent to resolve Google Play services errors.
-     */
-    private static final int REQUEST_RESOLVE_ERROR = 1000;
-
-    private static final String MIN_TEMP_KEY = "com.example.android.sunshine.data.min_temp";
-    private static final String MAX_TEMP_KEY = "com.example.android.sunshine.data.max_temp";
-    private static final String WEATHER_ID_KEY = "com.example.android.sunshine.data.weather_id";
-
+public class MainActivity extends AppCompatActivity implements ForecastFragment.Callback {
     private final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String DETAILFRAGMENT_TAG = "DFTAG";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -65,9 +44,6 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
 
     private boolean mTwoPane;
     private String mLocation;
-
-    private GoogleApiClient mGoogleApiClient;
-    private boolean mResolvingError = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,84 +105,6 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
                 Intent intent = new Intent(this, RegistrationIntentService.class);
                 startService(intent);
             }
-        }
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-    }
-
-    // Create a data map and put data in it
-    private void sendWeatherToWear() {
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/weather");
-        Random rnd = new Random();
-        int minTemp = rnd.nextInt(100);
-        int maxTemp = rnd.nextInt(100);
-        int weatherId = rnd.nextInt(10);
-        Log.d(LOG_TAG, "sending ("+minTemp+", "+maxTemp+"), "+weatherId);
-
-        putDataMapReq.getDataMap().putInt(MIN_TEMP_KEY, minTemp);
-        putDataMapReq.getDataMap().putInt(MAX_TEMP_KEY, maxTemp);
-        putDataMapReq.getDataMap().putInt(WEATHER_ID_KEY, weatherId);
-        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-        PendingResult<DataApi.DataItemResult> pendingResult =
-                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-            @Override
-            public void onResult(DataApi.DataItemResult dataItemResult) {
-                Log.d(LOG_TAG, "Sending data was successful: " + dataItemResult.getStatus()
-                        .isSuccess());
-            }
-        });
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (!mResolvingError) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        if (!mResolvingError) {
-            mGoogleApiClient.disconnect();
-        }
-        super.onStop();
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d(LOG_TAG, "Google API Client was connected");
-        mResolvingError = false;
-        //TODO move this to SunshineSyncAdapter
-        sendWeatherToWear();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.d(LOG_TAG, "Connection to Google API client was suspended");
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult result) {
-        if (mResolvingError) {
-            // Already attempting to resolve an error.
-            return;
-        } else if (result.hasResolution()) {
-            try {
-                mResolvingError = true;
-                result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
-            } catch (IntentSender.SendIntentException e) {
-                // There was an error with the resolution intent. Try again.
-                mGoogleApiClient.connect();
-            }
-        } else {
-            Log.e(LOG_TAG, "Connection to Google API client has failed");
-            mResolvingError = false;
         }
     }
 
