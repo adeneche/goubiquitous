@@ -81,9 +81,9 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
 
     private GoogleApiClient mGoogleApiClient;
 
-    int lowTemp = -1;
-    int highTemp = -1;
-    int weatherId = -1;
+    int lowTemp = 0;
+    int highTemp = 0;
+    int weatherId = 0;
     boolean receivedData = false;
 
     @Override
@@ -156,6 +156,7 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
     private class Engine extends CanvasWatchFaceService.Engine {
         final Handler mUpdateTimeHandler = new EngineHandler(this);
         boolean mRegisteredTimeZoneReceiver = false;
+        float[] dimensions;
         Paint mBackgroundPaint;
         Paint mTextPaint;
         Paint mDatePaint;
@@ -170,9 +171,6 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
                 mTime.setToNow();
             }
         };
-        float mYOffset;
-        float mDateYOffset;
-        float mTempOffset;
 
         Paint mWeatherPaint;
         Bitmap mWeatherBitmap;
@@ -195,9 +193,6 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
                     .setShowSystemUiTime(false)
                     .build());
             Resources resources = SunshineFace.this.getResources();
-            mYOffset = resources.getDimension(R.dimen.digital_offset);
-            mDateYOffset = resources.getDimension(R.dimen.digital_date_offset);
-            mTempOffset = resources.getDimension(R.dimen.digital_temp_offset);
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
@@ -286,7 +281,7 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
             Paint paint = new Paint();
             paint.setColor(textColor);
             paint.setTypeface(NORMAL_TYPEFACE);
-            paint.setTextAlign(Paint.Align.CENTER);
+//            paint.setTextAlign(Paint.Align.CENTER);
             paint.setAntiAlias(true);
             return paint;
         }
@@ -296,7 +291,7 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
             paint.setColor(textColor);
             paint.setAlpha(175);
             paint.setTypeface(NORMAL_TYPEFACE);
-            paint.setTextAlign(Paint.Align.CENTER);
+//            paint.setTextAlign(Paint.Align.CENTER);
             paint.setAntiAlias(true);
             return paint;
         }
@@ -349,17 +344,60 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
             super.onApplyWindowInsets(insets);
 
             // Load resources that have alternate values for round watches.
+            dimensions = getDimensions(insets.isRound());
+
+            mTextPaint.setTextSize(dimensions[TIME_TXT_SIZE]);
+            mDatePaint.setTextSize(dimensions[DATE_TXT_SIZE]);
+            mHTPaint.setTextSize(dimensions[TEMPERATURE_TXT_SIZE]);
+            mLTPaint.setTextSize(dimensions[TEMPERATURE_TXT_SIZE]);
+        }
+
+        private static final int TIME_TXT_SIZE = 0;
+        private static final int DATE_TXT_SIZE = 1;
+        private static final int TEMPERATURE_TXT_SIZE = 2;
+        private static final int TIME_TXT_Y = 3;
+        private static final int DATE_TXT_Y = 4;
+        private static final int LINE_Y = 5;
+        private static final int LINE_WIDTH = 6;
+        private static final int LOW_TEMP_TXT_X = 7;
+        private static final int HIGH_TEMP_TXT_X = 8;
+        private static final int TEMPERATURE_TXT_Y = 9;
+        private static final int WEATHER_ICON_X = 10;
+        private static final int WEATHER_ICON_Y = 11;
+
+        private float[] getDimensions(boolean isRound) {
+            float[] dimensions = new float[12];
             Resources resources = SunshineFace.this.getResources();
-            boolean isRound = insets.isRound();
-            float textSize = resources.getDimension(isRound
-                    ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
-            float dateSize = resources.getDimension(isRound
-                    ? R.dimen.digital_date_size : R.dimen.digital_date_size_round);
-            float tempSize = resources.getDimension(R.dimen.digital_temp_size);
-            mTextPaint.setTextSize(textSize);
-            mDatePaint.setTextSize(dateSize);
-            mHTPaint.setTextSize(tempSize);
-            mLTPaint.setTextSize(tempSize);
+
+            if (isRound) {
+                dimensions[TIME_TXT_SIZE] = resources.getDimension(R.dimen.time_txt_size_round);
+                dimensions[DATE_TXT_SIZE] = resources.getDimension(R.dimen.date_txt_size_round);
+                dimensions[TEMPERATURE_TXT_SIZE] = resources.getDimension(R.dimen.temperature_txt_size_round);
+                dimensions[TIME_TXT_Y] = resources.getDimension(R.dimen.time_txt_y_round);
+                dimensions[DATE_TXT_Y] = resources.getDimension(R.dimen.date_txt_y_round);
+                dimensions[LINE_Y] = resources.getDimension(R.dimen.line_y_round);
+                dimensions[LINE_WIDTH] = resources.getDimension(R.dimen.line_width_round);
+                dimensions[LOW_TEMP_TXT_X] = resources.getDimension(R.dimen.low_temp_txt_x_round);
+                dimensions[HIGH_TEMP_TXT_X] = resources.getDimension(R.dimen.high_temp_txt_x_round);
+                dimensions[TEMPERATURE_TXT_Y] = resources.getDimension(R.dimen.temperature_txt_y_round);
+                dimensions[WEATHER_ICON_X] = resources.getDimension(R.dimen.weather_icon_x_round);
+                dimensions[WEATHER_ICON_Y] = resources.getDimension(R.dimen.weather_icon_y_round);
+            } else {
+                dimensions[TIME_TXT_SIZE] = resources.getDimension(R.dimen.time_txt_size);
+                dimensions[DATE_TXT_SIZE] = resources.getDimension(R.dimen.date_txt_size);
+                dimensions[TEMPERATURE_TXT_SIZE] = resources.getDimension(R.dimen.temperature_txt_size);
+                dimensions[TIME_TXT_Y] = resources.getDimension(R.dimen.time_txt_y);
+                dimensions[DATE_TXT_Y] = resources.getDimension(R.dimen.date_txt_y);
+                dimensions[LINE_Y] = resources.getDimension(R.dimen.line_y);
+                dimensions[LINE_WIDTH] = resources.getDimension(R.dimen.line_width);
+                dimensions[LOW_TEMP_TXT_X] = resources.getDimension(R.dimen.low_temp_txt_x);
+                dimensions[HIGH_TEMP_TXT_X] = resources.getDimension(R.dimen.high_temp_txt_x);
+                dimensions[TEMPERATURE_TXT_Y] = resources.getDimension(R.dimen.temperature_txt_y);
+                dimensions[WEATHER_ICON_X] = resources.getDimension(R.dimen.weather_icon_x);
+                dimensions[WEATHER_ICON_Y] = resources.getDimension(R.dimen.weather_icon_y);
+            }
+
+            return dimensions;
         }
 
         @Override
@@ -402,16 +440,17 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
             // Draw H:MM
             mTime.setToNow();
             String text = String.format("%d:%02d", mTime.hour, mTime.minute);
-            canvas.drawText(text, bounds.centerX(), mYOffset, mTextPaint);
+            canvas.drawText(text, bounds.centerX(), dimensions[TIME_TXT_Y], mTextPaint);
 
             if (!isInAmbientMode()) {
-                canvas.drawText(mTime.format("%a, %b %d %Y"), bounds.centerX(), mDateYOffset, mDatePaint);
-                canvas.drawLine(bounds.centerX() - 25, mDateYOffset + 20, bounds.centerX() + 25, mDateYOffset + 20, mDatePaint);
+                canvas.drawText(mTime.format("%a, %b %d %Y"), bounds.centerX(), dimensions[DATE_TXT_Y], mDatePaint);
+                canvas.drawLine(bounds.centerX() - dimensions[LINE_WIDTH]/2, dimensions[LINE_Y],
+                        bounds.centerX() + dimensions[LINE_WIDTH]/2, dimensions[LINE_Y], mDatePaint);
 
                 if (receivedData) {
                     // low/high temperatures
-                    canvas.drawText(lowTemp + "˚", bounds.centerX(), mTempOffset, mHTPaint);
-                    canvas.drawText(highTemp + "˚", (int) (bounds.width() * .7), mTempOffset, mLTPaint);
+                    canvas.drawText(lowTemp + "˚", dimensions[LOW_TEMP_TXT_X], dimensions[TEMPERATURE_TXT_Y], mHTPaint);
+                    canvas.drawText(highTemp + "˚", dimensions[HIGH_TEMP_TXT_X], dimensions[TEMPERATURE_TXT_Y], mLTPaint);
 
                     if (weatherId != SunshineFace.this.weatherId) {
                         weatherId = SunshineFace.this.weatherId;
@@ -420,7 +459,7 @@ public class SunshineFace extends CanvasWatchFaceService implements GoogleApiCli
 
                     if (mWeatherBitmap != null) {
                         // draw weather graphic
-                        canvas.drawBitmap(mWeatherBitmap, bounds.width() * .2f, mTempOffset - 60, mWeatherPaint);
+                        canvas.drawBitmap(mWeatherBitmap, dimensions[WEATHER_ICON_X], dimensions[WEATHER_ICON_Y], mWeatherPaint);
                     }
                 }
             }

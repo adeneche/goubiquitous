@@ -1,13 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="digital_text_size">30dp</dimen>
-    <dimen name="digital_date_size">10dp</dimen>
-    <dimen name="digital_temp_size">22dp</dimen>
+    <dimen name="time_txt_size">30dp</dimen>
+    <dimen name="date_txt_size">18dp</dimen>
+    <dimen name="temperature_txt_size">22dp</dimen>
+    <dimen name="time_txt_y">70dp</dimen>
+    <dimen name="date_txt_y">95dp</dimen>
+    <dimen name="line_y">105dp</dimen>
+    <dimen name="line_width">50dp</dimen>
+    <dimen name="low_temp_txt_x">80dp</dimen>
+    <dimen name="high_temp_txt_x">120dp</dimen>
+    <dimen name="temperature_txt_y">140dp</dimen>
+    <dimen name="weather_icon_x">30dp</dimen>
+    <dimen name="weather_icon_y">115dp</dimen>
 
-    <dimen name="digital_offset">70dp</dimen>
-    <dimen name="digital_date_offset">90dp</dimen>
-    <dimen name="digital_temp_offset">130dp</dimen>
 
-    <dimen name="digital_date_size_round">15dp</dimen>
-    <dimen name="digital_text_size_round">40dp</dimen>
+    <dimen name="time_txt_size_round">40dp</dimen>
+    <dimen name="date_txt_size_round">20dp</dimen>
+    <dimen name="temperature_txt_size_round">30dp</dimen>
+    <dimen name="time_txt_y_round">80dp</dimen>
+    <dimen name="date_txt_y_round">110dp</dimen>
+    <dimen name="line_y_round">125dp</dimen>
+    <dimen name="line_width_round">70dp</dimen>
+    <dimen name="low_temp_txt_x_round">100dp</dimen>
+    <dimen name="high_temp_txt_x_round">150dp</dimen>
+    <dimen name="temperature_txt_y_round">165dp</dimen>
+    <dimen name="weather_icon_x_round">55dp</dimen>
+    <dimen name="weather_icon_y_round">135dp</dimen>
 </resources>
